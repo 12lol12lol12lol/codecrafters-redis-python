@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    server_socket = socket.create_server((socket.gethostname(), 6379), reuse_port=True)
+    server_socket = socket.create_server(('localhost', 6379), reuse_port=True)
     server_socket.listen()
     logger.info('Start listening')
     while True:
