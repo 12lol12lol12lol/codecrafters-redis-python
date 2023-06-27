@@ -7,6 +7,7 @@ from app.handler import CommandHandler, UnrecogniseCommandException
 from app.parser import RespParser
 from app.services import convert_to_response
 
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
