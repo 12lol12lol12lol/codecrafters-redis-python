@@ -5,6 +5,7 @@ from app.errors import CommandException
 
 PING_COMMAND = 'PING'
 PONG_COMMAND = 'PONG'
+DOCS_COMMAND = 'DOCS'
 
 
 class PingCommandException(CommandException):
@@ -31,3 +32,11 @@ class PingCommand(Command):
         if args and (value := args[0]):
             return [value, ]
         return res
+
+
+@dataclass
+class DocsCommand(Command):
+    command: str
+
+    def execute(self, *args) -> list[str]:
+        return ['DOCS', ]
