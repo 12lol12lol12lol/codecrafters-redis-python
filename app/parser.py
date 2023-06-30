@@ -1,5 +1,6 @@
-from socket import socket
+import asyncio
 from dataclasses import dataclass
+from socket import socket
 
 ARRAY_SIGN = b'*'
 DELIMETER_SIGN = b'\r'
@@ -13,33 +14,35 @@ class RespParseException(Exception):
 @dataclass
 class RespParser:
     socket2parse: socket
+    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
 
-    def parse_value(self) -> str:
+    async def parse_value(self) -> str:
         count_bytes = b''
-        while (value := self.socket2parse.recv(1)) != DELIMETER_SIGN:
+        while (value := (await self.loop.sock_recv(self.socket2parse, 1))) != DELIMETER_SIGN:
             count_bytes += value
-        self.socket2parse.recv(1)
-        return self.socket2parse.recv(int(count_bytes)).decode()
+        await self.loop.sock_recv(self.socket2parse, 1)
+        return (await self.loop.sock_recv(self.socket2parse, int(count_bytes))).decode()
 
-    def parse_string_array(self) -> str:
+    async def parse_string_array(self) -> list[str]:
         count_bytes = b''
-        while (value := self.socket2parse.recv(1)) != DELIMETER_SIGN:
+        while (value := (await self.loop.sock_recv(self.socket2parse, 1))) != DELIMETER_SIGN:
             count_bytes += value
-        self.socket2parse.recv(1)
+        await self.loop.sock_recv(self.socket2parse, 1)
         count = int(count_bytes)
         values = []
         while count > 0:
-            if self.socket2parse.recv(1) != START_OF_VALUE_SIGN:
+            if (await self.loop.sock_recv(self.socket2parse, 1)) != START_OF_VALUE_SIGN:
                 raise RespParseException(f'Expected {START_OF_VALUE_SIGN} did not accepted')
-            values.append(self.parse_value())
-            self.socket2parse.recv(2)
+            values.append(await self.parse_value())
+            await self.loop.sock_recv(self.socket2parse, 2)
             count -= 1
         return values
 
-    def run(self) -> list[str]:
+    async def run(self) -> list[str]:
         res = []
-        while (value := self.socket2parse.recv(1)):
+        while (value := (await self.loop.sock_recv(self.socket2parse, 1))):
             if value == ARRAY_SIGN:
-                res.extend(self.parse_string_array())
+                array_result = await self.parse_string_array()
+                res.extend(array_result)
             return res
         return res
