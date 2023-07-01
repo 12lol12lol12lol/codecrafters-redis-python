@@ -10,35 +10,19 @@ OK_COMMAND = 'OK'
 
 
 class PingCommandException(CommandException):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-    def __str__(self) -> str:
-        return "ERR wrong number of arguments for 'ping' command"
+    default_message = "ERR wrong number of arguments for 'ping' command"
 
 
 class EchoCommandException(CommandException):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-    def __str__(self) -> str:
-        return "ERR wrong number of arguments for 'echo' command"
+    default_message = "ERR wrong number of arguments for 'echo' command"
 
 
 class SetCommandException(CommandException):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-    def __str__(self) -> str:
-        return "ERR wrong number of arguments for 'set' command"
+    default_message = "ERR wrong number of arguments for 'set' command"
 
 
 class GetCommandException(CommandException):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-    def __str__(self) -> str:
-        return "ERR wrong number of arguments for 'get' command"
+    default_message = "ERR wrong number of arguments for 'get' command"
 
 
 class Command(ABC):
@@ -81,12 +65,24 @@ class EchoCommand(Command):
 class SetCommand(Command):
     storage: Storage
     command: str = 'SET'
+    expire_commands = {'PX', }
 
     def execute(self, *args) -> tuple[list[str], ResponseType]:
-        if len(args) != 2:
-            raise SetCommandException()
-        self.storage.set(args[0], args[1])
-        return [OK_COMMAND, ], ResponseType.ok
+        if len(args) == 2:
+            self.storage.set(args[0], args[1])
+            return [OK_COMMAND, ], ResponseType.ok
+        elif len(args) == 4:
+            if args[2].upper() not in self.expire_commands:
+                raise SetCommandException('ERR syntax error')
+            try:
+                v = int(args[3])
+                if v <= 0:
+                    raise SetCommandException("ERR invalid expire time in 'set' command")
+                self.storage.set(args[0], args[1], v)
+                return [OK_COMMAND, ], ResponseType.ok
+            except ValueError:
+                raise SetCommandException("ERR invalid expire time in 'set' command")
+        raise SetCommandException()
 
 
 @dataclass

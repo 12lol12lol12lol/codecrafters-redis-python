@@ -1,14 +1,18 @@
 class CommandHandlerException(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+    default_message = "ERR unknown command"
 
-    def __str__(self) -> str:
-        return "ERR unknown command"
+    def __init__(self, *args: object) -> None:
+        if not args:
+            super().__init__(self.default_message)
+            return
+        super().__init__(*args)
 
 
 class CommandException(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+    default_message = "ERR in execute command"
 
-    def __str__(self) -> str:
-        return "ERR in execute command"
+    def __init__(self, *args: object) -> None:
+        if not args:
+            super().__init__(self.default_message)
+            return
+        super().__init__(*args)
