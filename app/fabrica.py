@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from app.command import Command, DocsCommand, EchoCommand, PingCommand
+from app.command import Command, DocsCommand, EchoCommand, GetCommand, PingCommand, SetCommand
 from app.errors import CommandHandlerException
+from app.storage import Storage
 
 
 class UnrecogniseCommandException(CommandHandlerException):
@@ -21,15 +22,19 @@ class UnrecogniseCommandException(CommandHandlerException):
 
 
 @dataclass
-class CommandHandler:
-    command: str
+class CommandFabrica:
+    storage: Storage
 
-    def execute(self, *args) -> Command:
-        if self.command.upper() == PingCommand.command:
+    def get_command(self, command, *args) -> Command:
+        if command.upper() == PingCommand.command:
             return PingCommand()
-        if self.command.upper() == 'COMMAND':
+        if command.upper() == 'COMMAND':
             if args and args[0] == DocsCommand.command:
-                return DocsCommand(args[0])
-        if self.command.upper() == EchoCommand.command:
+                return DocsCommand()
+        if command.upper() == EchoCommand.command:
             return EchoCommand()
-        raise UnrecogniseCommandException(self.command, args)
+        if command.upper() == SetCommand.command:
+            return SetCommand(self.storage)
+        if command.upper() == GetCommand.command:
+            return GetCommand(self.storage)
+        raise UnrecogniseCommandException(command, args)

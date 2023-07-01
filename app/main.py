@@ -5,15 +5,16 @@ import socket
 from app.constants import ResponseType
 
 from app.errors import CommandException, CommandHandlerException
-from app.handler import CommandHandler
+from app.fabrica import CommandFabrica
 from app.parser import RespParser
 from app.services import convert_to_response
+from app.storage import Storage
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-async def handle_request(client_socket: socket, addr: str) -> None:
+async def handle_request(client_socket: socket, addr: str, fabrica: CommandFabrica) -> None:
     loop = asyncio.get_event_loop()
     while True:
         parser = RespParser(client_socket, loop)
@@ -24,7 +25,7 @@ async def handle_request(client_socket: socket, addr: str) -> None:
         args = res[1:] if len(res) > 1 else list()
         response_type = ResponseType.ok
         try:
-            command = CommandHandler(command).execute(*args)
+            command = fabrica.get_command(command, *args)
             response, response_type = command.execute(*args)
         except (CommandHandlerException, CommandException) as ex:
             response, response_type = [str(ex), ], ResponseType.error
@@ -39,9 +40,11 @@ async def main():
     server_socket.listen()
     logger.info('Start listening')
     loop = asyncio.get_event_loop()
+    storage = Storage(dict())
+    fabrica = CommandFabrica(storage)
     while True:
         client_socket, addr = await loop.sock_accept(server_socket)
-        loop.create_task(handle_request(client_socket, addr))
+        loop.create_task(handle_request(client_socket, addr, fabrica))
 
 
 if __name__ == "__main__":
