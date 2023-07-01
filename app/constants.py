@@ -1,5 +1,7 @@
 from enum import Enum
 
 
-class RedisCommand(Enum):
-    ping = 'ping'
+class ResponseType(Enum):
+    ok = 'ok'
+    error = 'error'
+    args = 'args'

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from app.command import DOCS_COMMAND, Command, PING_COMMAND, DocsCommand, PingCommand
+from app.command import Command, DocsCommand, EchoCommand, PingCommand
 from app.errors import CommandHandlerException
 
 
@@ -25,9 +25,11 @@ class CommandHandler:
     command: str
 
     def execute(self, *args) -> Command:
-        if (value := self.command.upper()) in {PING_COMMAND, }:
-            return PingCommand(value)
-        if (value := self.command.upper()) == 'COMMAND':
-            if args and args[0] == DOCS_COMMAND:
+        if self.command.upper() == PingCommand.command:
+            return PingCommand()
+        if self.command.upper() == 'COMMAND':
+            if args and args[0] == DocsCommand.command:
                 return DocsCommand(args[0])
+        if self.command.upper() == EchoCommand.command:
+            return EchoCommand()
         raise UnrecogniseCommandException(self.command, args)
